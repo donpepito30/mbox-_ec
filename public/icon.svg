@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+    </linearGradient>
+    <filter id="shieldShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0ea5e9" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="#0f172a" />
+  
+  <!-- Subtle Grid/Shield ambient glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#glowGrad)" />
+
+  <!-- Shield Base Contour -->
+  <path d="M256 64 C352 64 416 92 416 92 C416 260 348 376 256 448 C164 376 96 260 96 92 C96 92 160 64 256 64 Z" 
+        fill="url(#shieldGrad)" 
+        filter="url(#shieldShadow)" />
+
+  <!-- Inner Dark Core for Contrast -->
+  <path d="M256 94 C332 94 384 116 384 116 C384 252 328 350 256 414 C184 350 128 252 128 116 C128 116 180 94 256 94 Z" 
+        fill="#1e293b" />
+
+  <!-- Neon Accent Border inside Shield -->
+  <path d="M256 120 C316 120 358 136 358 136 C358 244 314 326 256 376 C198 326 154 244 154 136 C154 136 196 120 256 120 Z" 
+        stroke="#38bdf8" stroke-width="4" stroke-opacity="0.4" fill="none" />
+
+  <!-- Play Symbol & Lock Emblem -->
+  <polygon points="232,192 320,256 232,320" fill="#38bdf8" />
+  <circle cx="256" cy="376" r="8" fill="#38bdf8" />
+</svg>

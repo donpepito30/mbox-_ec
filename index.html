@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>StreamShield - Reproductor Seguro PWA</title>
+    <meta name="description" content="Plataforma de reproducción streaming segura y aislada en entorno PWA con sandbox contra pop-ups y redirecciones." />
+    
+    <!-- PWA & Mobile Meta Tags (iOS & Android) -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="StreamShield" />
+    <meta name="application-name" content="StreamShield App" />
+    
+    <!-- Open Graph & Social Cards -->
+    <meta property="og:title" content="StreamShield - Reproductor Seguro PWA" />
+    <meta property="og:description" content="Plataforma de reproducción streaming segura y aislada en entorno PWA con sandbox contra pop-ups y redirecciones." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Icons & Manifest -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <script>
+      // Purge all development service workers and caches to ensure clean execution
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          registrations.forEach(function (registration) {
+            registration.unregister();
+          });
+        }).catch(function () {});
+      }
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (key) {
+            caches.delete(key);
+          });
+        }).catch(function () {});
+      }
+    </script>
+  </head>
+  <body class="bg-[#0f172a] text-[#f8fafc] antialiased min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

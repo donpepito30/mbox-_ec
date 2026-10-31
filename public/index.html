@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Plataforma de reproducción streaming segura y aislada en entorno PWA.">
+
+    <!-- Meta Etiquetas PWA / Móvil (iOS & Android) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="StreamShield">
+    <meta name="application-name" content="StreamShield App">
+
+    <title>StreamShield - Reproductor Seguro PWA</title>
+
+    <!-- Archivo Manifest e Iconos -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+
+    <!-- Hoja de Estilos Independiente -->
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <span class="logo-icon">🛡️</span>
+            <div>
+                <h1>StreamShield App <span class="badge-pwa">PWA</span></h1>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="btnRestart" class="btn btn-restart" onclick="resetPlayerSandbox()" title="Reiniciar entorno aislado">
+                🔄 Reiniciar
+            </button>
+            <button id="pwaInstallBtn" class="btn btn-pwa" onclick="triggerPwaInstall()">
+                📲 Instalar App
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Aviso de Seguridad Informativo Realista -->
+        <div class="security-notice">
+            <span style="font-size: 1.3rem;">🛡️</span>
+            <div>
+                <strong>Aviso de Seguridad:</strong> El reproductor corre aislado sin acceso a cámara, micrófono, descargas automáticas ni ventanas emergentes (pop-ups). <em>Nota: Este sandbox no bloquea los anuncios que el proveedor muestre internamente dentro de la pantalla del video.</em>
+            </div>
+        </div>
+
+        <!-- Visor del Reproductor Aislado con Detección de Errores -->
+        <div id="playerWrapper" class="player-wrapper">
+            <!-- Overlay de Protección y Lanzamiento -->
+            <div id="shieldOverlay" class="shield-overlay">
+                
+                <!-- Tarjeta Inicial: Clic para reproducir -->
+                <div id="initialCard" class="shield-card">
+                    <div class="shield-badge">
+                        <span>🔒 Entorno Aislado Activo</span>
+                    </div>
+                    <h2 style="font-size: 1.25rem; margin-bottom: 8px;">Reproductor Listo</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 12px;">
+                        Haz clic a continuación para iniciar el reproductor en el entorno protegido. Las ventanas emergentes externas permanecerán bloqueadas por el navegador.
+                    </p>
+                    <p id="embedDiagnosticText" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">
+                        Verificando cabeceras de incrustabilidad...
+                    </p>
+                    <button id="btnLaunchStream" class="btn-launch" onclick="loadProtectedStream()">
+                        ▶ Reproducir Contenido Seguro
+                    </button>
+                </div>
+
+                <!-- Tarjeta de Carga -->
+                <div id="loadingCard" class="loading-card">
+                    <div class="spinner"></div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 6px;">Cargando Reproductor Seguro</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">
+                        Conectando con el proveedor bajo políticas estrictas de sandbox...
+                    </p>
+                </div>
+
+                <!-- Tarjeta de Error Estrictamente Aislada (Sin Enlaces Externos) -->
+                <div id="errorCard" class="error-card">
+                    <p id="errorReasonText">
+                        Este contenido no está disponible en modo seguro. Por tu protección, StreamShield no abre sitios fuera del entorno aislado.
+                    </p>
+                    <div class="error-actions">
+                        <button class="btn-retry" onclick="loadProtectedStream()">
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                REPRODUCTOR IFRAME REFORZADO CONTRA SALIDA DEL ENTORNO AISLADO:
+                1. sandbox: "allow-scripts allow-same-origin allow-presentation"
+                   (Sin allow-popups, sin allow-top-navigation, sin allow-modals, sin allow-downloads, sin allow-forms).
+                2. allowfullscreen habilitado.
+                3. sin loading="lazy".
+                4. referrerpolicy: "strict-origin-when-cross-origin".
+            -->
+            <iframe 
+                id="mainPlayer" 
+                src="about:blank" 
+                sandbox="allow-scripts allow-same-origin allow-presentation" 
+                allow="fullscreen; autoplay; encrypted-media" 
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin"
+                title="Reproductor Seguro">
+            </iframe>
+        </div>
+
+        <!-- Barra de Controles y Estado del Sandbox -->
+        <div class="controls-bar">
+            <div class="status-indicator">
+                <span id="statusDot" class="status-dot"></span>
+                <span id="statusText">Listo para reproducir</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" style="padding: 5px 10px; font-size: 0.75rem;" onclick="togglePlayerFullscreen()">
+                    ⛶ Pantalla Completa
+                </button>
+                <button class="btn" style="padding: 5px 10px; font-size: 0.75rem;" onclick="resetPlayerSandbox()">
+                    Reiniciar Sandbox
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Banner Flotante de Conexión Offline -->
+    <div id="offlineBanner" class="offline-banner">
+        ⚠️ <strong>Modo Sin Conexión:</strong> Estás navegando en el cascarón PWA cacheado localmente.
+    </div>
+
+    <footer>
+        <p>© StreamShield App - Plataforma PWA Aislada</p>
+    </footer>
+
+    <!-- Script de Aplicación Vanilla -->
+    <script src="/app.js"></script>
+</body>
+</html>
