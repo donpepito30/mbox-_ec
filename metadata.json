@@ -2,5 +2,7 @@
   "name": "StreamShield - Reproductor Seguro PWA",
   "description": "Plataforma de reproducción streaming segura y aislada en entorno PWA con sandbox contra pop-ups y redirecciones.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
