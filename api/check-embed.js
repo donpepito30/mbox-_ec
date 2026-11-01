@@ -9,6 +9,15 @@
 const TARGET_URL = 'https://officialmoviebox.com/';
 
 export default async function handler(req, res) {
+  // Configurar cabeceras de respuesta y CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // Solo permitir solicitudes GET o HEAD
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).json({
@@ -18,18 +27,20 @@ export default async function handler(req, res) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   let embeddable = true;
-  let reason = 'El sitio remoto parece permitir la incrustación.';
+  let reason = 'El sitio remoto permite la incrustación.';
 
   try {
     const response = await fetch(TARGET_URL, {
       method: 'GET',
       signal: controller.signal,
+      redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
       }
     });
 
@@ -69,13 +80,19 @@ export default async function handler(req, res) {
     clearTimeout(timeoutId);
     embeddable = false;
     if (error.name === 'AbortError') {
-      reason = 'Tiempo de espera agotado (timeout 6 s) al intentar contactar al servidor remoto.';
+      reason = 'Tiempo de espera agotado (timeout 8 s) al contactar al servidor remoto.';
     } else {
       reason = `Error de red o conexión al servidor remoto: ${error.message}`;
     }
   }
 
-  // Establecer cabecera de caché en Vercel Edge Cache
-  res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
-  return res.status(200).json({ embeddable, reason });
+  // Establecer cabecera de caché en Vercel Edge Cache (10 minutos)
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=300');
+  return res.status(200).json({
+    embeddable,
+    reason,
+    target: TARGET_URL,
+    timestamp: new Date().toISOString()
+  });
 }

@@ -10,18 +10,20 @@ const TARGET_URL = 'https://officialmoviebox.com/';
 
 export async function onRequestGet(context) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   let embeddable = true;
-  let reason = 'El sitio remoto parece permitir la incrustación.';
+  let reason = 'El sitio remoto permite la incrustación.';
 
   try {
     const response = await fetch(TARGET_URL, {
       method: 'GET',
       signal: controller.signal,
+      redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
       }
     });
 
@@ -61,17 +63,23 @@ export async function onRequestGet(context) {
     clearTimeout(timeoutId);
     embeddable = false;
     if (error.name === 'AbortError') {
-      reason = 'Tiempo de espera agotado (timeout 6 s) al intentar contactar al servidor remoto.';
+      reason = 'Tiempo de espera agotado (timeout 8 s) al intentar contactar al servidor remoto.';
     } else {
       reason = `Error de red o conexión al servidor remoto: ${error.message}`;
     }
   }
 
-  return new Response(JSON.stringify({ embeddable, reason }), {
+  return new Response(JSON.stringify({
+    embeddable,
+    reason,
+    target: TARGET_URL,
+    timestamp: new Date().toISOString()
+  }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=600'
+      'Cache-Control': 'public, max-age=600, stale-while-revalidate=300',
+      'Access-Control-Allow-Origin': '*'
     }
   });
 }

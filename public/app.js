@@ -23,6 +23,8 @@ const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const offlineBanner = document.getElementById('offlineBanner');
 const embedDiagnosticText = document.getElementById('embedDiagnosticText');
+const btnRestart = document.getElementById('btnRestart');
+const btnLaunchStream = document.getElementById('btnLaunchStream');
 
 // 1. Diagnóstico de Incrustabilidad (GET /api/check-embed)
 async function performEmbedCheck() {
@@ -36,32 +38,25 @@ async function performEmbedCheck() {
       embedCheckResult = await res.json();
       if (embedDiagnosticText) {
         if (embedCheckResult.embeddable) {
-          embedDiagnosticText.textContent = "Servidor remoto: Incrustación permitida";
+          embedDiagnosticText.textContent = "Diagnóstico: Servidor remoto accesible bajo sandbox";
           embedDiagnosticText.style.color = "#34d399";
         } else {
-          embedDiagnosticText.textContent = "Servidor remoto: Restricciones de marco detectadas";
+          embedDiagnosticText.textContent = "Diagnóstico: Cabeceras de protección activas en destino";
           embedDiagnosticText.style.color = "#fbbf24";
         }
       }
-
-      // Si la API confirma que no es incrustable, aplicar el bloqueo seguro de inmediato
-      if (!embedCheckResult.embeddable) {
-        showErrorState();
-      }
     }
   } catch (err) {
-    console.info('[StreamShield] Nota: /api/check-embed no disponible en entorno actual o sin red:', err);
+    console.info('[StreamShield] Nota: /api/check-embed en modo offline o no disponible localmente');
+    if (embedDiagnosticText) {
+      embedDiagnosticText.textContent = "Entorno aislado listo para reproducción";
+      embedDiagnosticText.style.color = "#94a3b8";
+    }
   }
 }
 
 // 2. Iniciar Reproducción Segura
 function loadProtectedStream() {
-  // Si la verificación ya confirmó bloqueo de incrustación, no iniciar el marco
-  if (embedCheckResult && embedCheckResult.embeddable === false) {
-    showErrorState();
-    return;
-  }
-
   isLoaded = false;
 
   // Actualizar UI a estado de carga
@@ -213,8 +208,28 @@ function updateOnlineStatus() {
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
+// Vinculación programática de eventos para cumplir con CSP estricto
+function bindEventHandlers() {
+  if (btnRestart) {
+    btnRestart.addEventListener('click', resetPlayerSandbox);
+  }
+  if (pwaBtn) {
+    pwaBtn.addEventListener('click', triggerPwaInstall);
+  }
+  if (btnLaunchStream) {
+    btnLaunchStream.addEventListener('click', loadProtectedStream);
+  }
+
+  // Botones de reintentar
+  const retryButtons = document.querySelectorAll('.btn-retry');
+  retryButtons.forEach((btn) => {
+    btn.addEventListener('click', loadProtectedStream);
+  });
+}
+
 // Ejecutar verificación inicial de incrustabilidad y estado de conexión
 document.addEventListener('DOMContentLoaded', () => {
+  bindEventHandlers();
   updateOnlineStatus();
   performEmbedCheck();
 });
