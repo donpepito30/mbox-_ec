@@ -17,10 +17,20 @@ import { AspectRatio, StreamSource, PRESET_STREAMS, SecurityEvent } from './type
 
 export default function App() {
   const [currentSource, setCurrentSource] = useState<StreamSource>(PRESET_STREAMS[0]);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16/9');
+  // Default to 'fill' (Adaptable) so the player acts as the true protagonist and fills the viewport (+40% space)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('fill');
   const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
+
+  // Check if security notice was already acknowledged
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('streamshield_aviso_v1') === 'accepted';
+    } catch {
+      return false;
+    }
+  });
 
   const { isInstallable, install } = usePWAInstall();
 
@@ -52,7 +62,7 @@ export default function App() {
           message,
           details,
         },
-        ...prev.slice(0, 49), // Keep latest 50 logs
+        ...prev.slice(0, 49),
       ]);
     },
     []
@@ -62,11 +72,24 @@ export default function App() {
     setLogs([]);
   };
 
+  const handleDismissNotice = () => {
+    try {
+      localStorage.setItem('streamshield_aviso_v1', 'accepted');
+    } catch {}
+    setIsNoticeDismissed(true);
+  };
+
+  const handleResetNotice = () => {
+    try {
+      localStorage.removeItem('streamshield_aviso_v1');
+    } catch {}
+    setIsNoticeDismissed(false);
+  };
+
   // Keyboard shortcut listener:
-  // 't' or 'T' for theater mode, 'f' or 'F' for fullscreen
+  // 't' or 'T' for theater mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
@@ -83,19 +106,26 @@ export default function App() {
       {/* Offline banner */}
       <OfflineBanner />
 
-      {/* Top Navigation & App Bar */}
-      <Header
-        onOpenInspector={() => setIsInspectorOpen(true)}
-        onOpenIOSGuide={() => setIsInstallModalOpen(true)}
-        isSandboxed={true}
-      />
+      {/* Top Navigation Bar: Compact 48px Header */}
+      {!isTheaterMode && (
+        <Header
+          onOpenInspector={() => setIsInspectorOpen(true)}
+          onOpenIOSGuide={() => setIsInstallModalOpen(true)}
+          isSandboxed={true}
+        />
+      )}
 
-      {/* Main Container */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col gap-4">
-        {/* Aviso de Seguridad Informativo Realista */}
-        <SecurityNotice />
+      {/* Main Container: Compact vertical rhythm prioritizing the player */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-2.5 sm:px-4 py-2 sm:py-3 flex flex-col gap-2.5 sm:gap-3">
+        {/* Aviso de Seguridad Descartable: Ocupa 0px cuando fue aceptado */}
+        {!isTheaterMode && !isNoticeDismissed && (
+          <SecurityNotice
+            onDismiss={handleDismissNotice}
+            onOpenInspector={() => setIsInspectorOpen(true)}
+          />
+        )}
 
-        {/* Visor del Reproductor Aislado con Detección de Errores */}
+        {/* Visor del Reproductor Aislado (PROTAGONISTA) */}
         <PlayerWrapper
           currentSource={currentSource}
           aspectRatio={aspectRatio}
@@ -104,25 +134,30 @@ export default function App() {
           onAddLog={addLog}
         />
 
-        {/* Player Controls, Sources & Proportions */}
-        <PlayerControls
-          currentSource={currentSource}
-          aspectRatio={aspectRatio}
-          isTheaterMode={isTheaterMode}
-          onSelectSource={setCurrentSource}
-          onChangeAspectRatio={setAspectRatio}
-          onToggleTheaterMode={() => setIsTheaterMode(!isTheaterMode)}
-          onOpenInspector={() => setIsInspectorOpen(true)}
-        />
+        {/* Controles de Reproducción y Fuentes: Barra compacta */}
+        {!isTheaterMode && (
+          <PlayerControls
+            currentSource={currentSource}
+            aspectRatio={aspectRatio}
+            isTheaterMode={isTheaterMode}
+            onSelectSource={setCurrentSource}
+            onChangeAspectRatio={setAspectRatio}
+            onToggleTheaterMode={() => setIsTheaterMode(!isTheaterMode)}
+            onOpenInspector={() => setIsInspectorOpen(true)}
+          />
+        )}
 
-        {/* Live Security Monitor Log */}
-        <ActivityLog logs={logs} onClearLogs={clearLogs} />
+        {/* Monitor de Registro Plegable (Quiet footer drawer) */}
+        {!isTheaterMode && (
+          <ActivityLog logs={logs} onClearLogs={clearLogs} />
+        )}
       </main>
 
-      {/* Modals */}
+      {/* Modales Accesibles */}
       <SecurityInspectorModal
         isOpen={isInspectorOpen}
         onClose={() => setIsInspectorOpen(false)}
+        onResetNotice={handleResetNotice}
       />
 
       <PWAInstallModal
@@ -132,24 +167,29 @@ export default function App() {
         onInstall={install}
       />
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-[#334155] bg-[#1e293b] px-4 py-4 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© StreamShield App - Plataforma PWA Aislada</p>
-          <div className="flex items-center gap-4 text-[11px] text-slate-500">
-            <span>Sandbox Estricto W3C</span>
-            <span>•</span>
-            <button
-              onClick={() => setIsInspectorOpen(true)}
-              className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 cursor-pointer"
-            >
-              Auditoría de Seguridad
-            </button>
-            <span>•</span>
-            <span>Atajo: [T] Modo Teatro</span>
+      {/* Footer Compacto */}
+      {!isTheaterMode && (
+        <footer className="mt-auto border-t border-[#334155] bg-[#1e293b] px-3 py-2 text-center text-xs text-slate-400">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[11px]">
+            <p>© StreamShield App · Sandbox Estricto W3C</p>
+            <div className="flex items-center gap-3 text-slate-500">
+              <button
+                onClick={() => setIsInspectorOpen(true)}
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 cursor-pointer"
+              >
+                Auditoría
+              </button>
+              <span>•</span>
+              <button
+                onClick={() => setIsTheaterMode((prev) => !prev)}
+                className="hover:text-slate-300 cursor-pointer"
+              >
+                Teatro [T]
+              </button>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

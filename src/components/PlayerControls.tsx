@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import {
   Tv,
-  Film,
   Globe,
-  Maximize2,
-  Ratio,
-  Sliders,
-  Check,
   Plus,
-  Compass,
-  PlaySquare
+  PlaySquare,
+  Check
 } from 'lucide-react';
 import { AspectRatio, StreamSource, PRESET_STREAMS } from '../types';
 
@@ -30,7 +25,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onSelectSource,
   onChangeAspectRatio,
   onToggleTheaterMode,
-  onOpenInspector,
 }) => {
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customUrl, setCustomUrl] = useState('');
@@ -57,8 +51,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         id: `custom-${Date.now()}`,
         name: customName.trim() || parsed.hostname,
         url: customUrl.trim(),
-        badge: 'Stream Personalizado',
-        description: 'Fuente agregada manualmente por el usuario en sandbox protegido.',
+        badge: 'Personalizado',
+        description: 'Fuente manual en sandbox.',
         isExternalTarget: true,
       };
 
@@ -72,131 +66,105 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   };
 
   return (
-    <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        {/* Stream Source Selector */}
-        <div className="w-full lg:w-auto flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <PlaySquare className="w-3.5 h-3.5 text-cyan-400" />
-              Seleccionar Fuente de Reproducción
-            </span>
+    <div className="bg-[#1e293b]/90 border border-[#334155] rounded-xl px-3 py-2 shadow-lg flex flex-wrap items-center justify-between gap-2.5 transition-all">
+      {/* Stream Source Selector: Compact Chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full flex-1">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline mr-1">
+          Fuente:
+        </span>
+        {PRESET_STREAMS.map((source) => {
+          const isSelected = currentSource.url === source.url;
+          return (
             <button
-              onClick={() => setShowCustomModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 font-medium cursor-pointer"
-            >
-              <Plus className="w-3 h-3" />
-              <span>Ingresar URL externa</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {PRESET_STREAMS.map((source) => {
-              const isSelected = currentSource.url === source.url;
-              return (
-                <button
-                  key={source.id}
-                  onClick={() => onSelectSource(source)}
-                  className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer relative overflow-hidden ${
-                    isSelected
-                      ? 'bg-cyan-950/60 border-cyan-500/80 text-white shadow-md shadow-cyan-900/30'
-                      : 'bg-slate-900/60 border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        isSelected
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      {source.badge}
-                    </span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                  </div>
-                  <h4 className="text-xs font-semibold truncate">{source.name}</h4>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">{source.url}</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* View & Aspect Ratio Controls */}
-        <div className="w-full lg:w-auto flex flex-wrap items-center gap-3 pt-3 lg:pt-0 lg:border-l lg:border-slate-700/60 lg:pl-4">
-          {/* Theater Mode Toggle */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Modo Teatro
-            </span>
-            <button
-              onClick={onToggleTheaterMode}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
-                isTheaterMode
-                  ? 'bg-indigo-950/80 border-indigo-500 text-indigo-300 shadow-md shadow-indigo-900/20'
-                  : 'bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800'
+              key={source.id}
+              onClick={() => onSelectSource(source)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                isSelected
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 shadow-sm'
+                  : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
               }`}
             >
-              <Tv className="w-3.5 h-3.5" />
-              <span>{isTheaterMode ? 'Teatro Activo' : 'Modo Teatro'}</span>
+              {isSelected && <Check className="w-3 h-3 text-cyan-400 stroke-[3]" />}
+              <span>{source.id === 'moviebox' ? 'Movie Box (Predet.)' : source.name.split(' (')[0]}</span>
             </button>
-          </div>
+          );
+        })}
 
-          {/* Aspect Ratio Buttons */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Ratio className="w-3 h-3 text-cyan-400" />
-              Proporción
-            </span>
-            <div className="flex items-center bg-slate-900/80 p-0.5 rounded-xl border border-slate-700">
-              {(['16/9', '21/9', '4/3', 'fill'] as AspectRatio[]).map((ratio) => (
-                <button
-                  key={ratio}
-                  onClick={() => onChangeAspectRatio(ratio)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                    aspectRatio === ratio
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {ratio === 'fill' ? 'Adaptable' : ratio}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Custom URL Button */}
+        <button
+          onClick={() => setShowCustomModal(true)}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-dashed border-slate-700 transition cursor-pointer flex items-center gap-1 shrink-0"
+          title="Cargar URL personalizada"
+        >
+          <Plus className="w-3 h-3" />
+          <span>URL</span>
+        </button>
+      </div>
+
+      {/* Proporción & Teatro: Compact Controls */}
+      <div className="flex items-center gap-2 shrink-0 ml-auto">
+        {/* Aspect Ratio Selector */}
+        <div className="flex items-center bg-slate-900/90 p-0.5 rounded-lg border border-slate-700/80">
+          {(['fill', '16/9', '21/9', '4/3'] as AspectRatio[]).map((ratio) => (
+            <button
+              key={ratio}
+              onClick={() => onChangeAspectRatio(ratio)}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition cursor-pointer ${
+                aspectRatio === ratio
+                  ? 'bg-cyan-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title={`Proporción ${ratio === 'fill' ? 'Adaptable (ocupa pantalla)' : ratio}`}
+            >
+              {ratio === 'fill' ? 'Adaptable' : ratio}
+            </button>
+          ))}
         </div>
+
+        {/* Theater Mode Button */}
+        <button
+          onClick={onToggleTheaterMode}
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+            isTheaterMode
+              ? 'bg-indigo-950 border-indigo-500 text-indigo-300'
+              : 'bg-slate-900/70 border-slate-700/70 text-slate-400 hover:text-white'
+          }`}
+          title="Modo Teatro (Atajo: [T])"
+        >
+          <Tv className="w-3 h-3" />
+          <span className="hidden sm:inline">Teatro</span>
+        </button>
       </div>
 
       {/* Custom Stream URL Modal */}
       {showCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="max-w-md w-full bg-[#1e293b] border border-[#334155] rounded-2xl p-6 shadow-2xl text-left space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="max-w-md w-full bg-[#1e293b] border border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xl text-left space-y-3.5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
-                <Globe className="w-5 h-5 text-cyan-400" />
-                <span>Cargar Stream en Sandbox</span>
+              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
+                <Globe className="w-4 h-4 text-cyan-400" />
+                <span>Cargar Stream en Sandbox Seguro</span>
               </div>
               <button
                 onClick={() => setShowCustomModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="text-slate-400 hover:text-white text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Introduce cualquier URL de reproductor o video web. StreamShield la aislará con políticas de sandbox estrictas impidiendo pop-ups y redirecciones.
+            <p className="text-xs text-slate-300 leading-snug">
+              Introduce cualquier URL de reproductor o video web para aislarla en sandbox W3C estricto contra pop-ups.
             </p>
 
-            <form onSubmit={handleAddCustomStream} className="space-y-3">
+            <form onSubmit={handleAddCustomStream} className="space-y-3 pt-1">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                   Nombre o Título (Opcional)
                 </label>
                 <input
                   type="text"
-                  placeholder="ej. Servidor 2 / Canal en Vivo"
+                  placeholder="ej. Servidor 2 / En Vivo"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-500"
@@ -204,7 +172,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                   URL del Stream / Embed
                 </label>
                 <input
@@ -224,15 +192,15 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-400 hover:to-cyan-500 text-white text-xs font-bold transition shadow-md shadow-cyan-600/30"
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-400 hover:to-cyan-500 text-white text-xs font-bold transition shadow-md shadow-cyan-600/30 cursor-pointer"
                 >
-                  Cargar en Sandbox
+                  Cargar
                 </button>
               </div>
             </form>

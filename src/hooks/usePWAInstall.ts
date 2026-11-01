@@ -35,14 +35,19 @@ export function usePWAInstall() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
+    // Register Service Worker in production (Vercel)
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js')
           .then((reg) => console.log('[StreamShield] Service Worker registrado:', reg.scope))
           .catch((err) => console.warn('[StreamShield] SW registration warning:', err));
       });
+    } else if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      // In development, ensure no service worker intercepts dev requests
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      }).catch(() => {});
     }
 
     return () => {

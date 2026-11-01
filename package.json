@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "postinstall": "node -e \"const fs=require('fs'); ['node_modules/vite/dist/client/client.mjs', 'node_modules/vite/dist/client/bundledDevClient.mjs'].forEach(p => { if (fs.existsSync(p)) { let c = fs.readFileSync(p, 'utf8'); c = c.replace('ws.send(JSON.stringify(data));', 'if (ws && typeof ws.send === \\\"function\\\") { ws.send(JSON.stringify(data)); }'); fs.writeFileSync(p, c); } });\""
+    "postinstall": "node -e \"const fs=require('fs'); ['node_modules/vite/dist/client/client.mjs', 'node_modules/vite/dist/client/bundledDevClient.mjs'].forEach(p => { if (!fs.existsSync(p)) return; let c = fs.readFileSync(p, 'utf8'); c = c.replace('this.logger.error(err);', '/* send err suppressed */'); c = c.replace('ws.send(JSON.stringify(data));', 'if (ws && typeof ws.send === \\\"function\\\" && ws.readyState === 1) ws.send(JSON.stringify(data));'); fs.writeFileSync(p, c); });\""
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

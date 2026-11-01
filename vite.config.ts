@@ -16,10 +16,18 @@ export default defineConfig(() => {
             const urlPath = rawUrl.split('?')[0];
 
             // Safely neutralize any stale browser requests for vite-plugin-pwa dev endpoints
-            if (rawUrl.includes('@vite-plugin-pwa') || rawUrl.includes('dev-sw')) {
+            if (rawUrl.includes('@vite-plugin-pwa') || rawUrl.includes('dev-sw') || rawUrl.includes('pwa-entry-point')) {
               res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-              res.setHeader('Cache-Control', 'no-store');
+              res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
               res.end('export default {}; export const registerDevSW = () => {};');
+              return;
+            }
+
+            // In dev mode, return self-unregistering worker to flush any lingering preview worker
+            if (urlPath === '/sw.js') {
+              res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+              res.end('self.addEventListener("install", () => self.skipWaiting()); self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.map((c) => caches.delete(c)))).then(() => self.registration.unregister())); });');
               return;
             }
 

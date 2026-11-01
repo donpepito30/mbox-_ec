@@ -27,7 +27,24 @@
     <link rel="manifest" href="/manifest.json" />
 
     <script>
-      // Purge all development service workers and caches to ensure clean execution
+      // Global fallback to neutralize any stale browser calls to registerDevSW
+      window.registerDevSW = function() {};
+
+      // Suppress benign HMR/socket disconnect errors when HMR is explicitly disabled
+      window.addEventListener('error', function(event) {
+        if (event && event.message && event.message.includes("reading 'send'")) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event && event.reason && event.reason.message && event.reason.message.includes("reading 'send'")) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+
+      // Purge any lingering development service workers and caches
       if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (registrations) {
           registrations.forEach(function (registration) {

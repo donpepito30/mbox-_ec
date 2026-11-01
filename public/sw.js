@@ -1,11 +1,26 @@
 // StreamShield Service Worker - PWA Offline Shell
-const CACHE_NAME = 'streamshield-v1';
+const CACHE_NAME = 'streamshield-v2';
+
+const isDev = typeof self !== 'undefined' && (
+  self.location.hostname === 'localhost' ||
+  self.location.hostname.includes('run.app') ||
+  self.location.hostname.includes('ais-dev') ||
+  self.location.hostname === '127.0.0.1'
+);
+
+if (isDev) {
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', (event) => {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+        .then(() => self.registration.unregister())
+    );
+  });
+}
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -16,6 +31,7 @@ const PRECACHE_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  if (isDev) return;
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(PRECACHE_ASSETS).catch((err) => {
@@ -27,6 +43,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  if (isDev) return;
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -42,6 +59,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (isDev) return;
   // Ignorar métodos no GET
   if (event.request.method !== 'GET') {
     return;
@@ -50,8 +68,18 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // REGLA CRÍTICA: NO interceptar ni almacenar en caché orígenes externos
-  // Bajo ninguna circunstancia se cachean transmisiones o marcos externos
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Omitir peticiones de desarrollo y Vite
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('node_modules') ||
+    url.pathname.includes('vite') ||
+    url.pathname.includes('dev-sw')
+  ) {
     return;
   }
 

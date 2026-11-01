@@ -13,11 +13,13 @@ import {
 interface SecurityInspectorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onResetNotice?: () => void;
 }
 
 export const SecurityInspectorModal: React.FC<SecurityInspectorModalProps> = ({
   isOpen,
   onClose,
+  onResetNotice,
 }) => {
   if (!isOpen) return null;
 
@@ -133,13 +135,24 @@ export const SecurityInspectorModal: React.FC<SecurityInspectorModalProps> = ({
           </p>
         </div>
 
-        {/* Close Button */}
-        <div className="flex justify-end pt-2">
+        {/* Modal Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+          {onResetNotice ? (
+            <button
+              onClick={() => {
+                onResetNotice();
+                onClose();
+              }}
+              className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2 transition cursor-pointer"
+            >
+              Restablecer aviso de seguridad inicial
+            </button>
+          ) : <div />}
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition cursor-pointer"
           >
-            Entendido y Aceptar
+            Cerrar
           </button>
         </div>
       </div>
